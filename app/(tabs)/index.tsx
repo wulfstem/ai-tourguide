@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View, ActivityIndicator, Platform } from "react-native";
+import { StyleSheet, View, ActivityIndicator } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 
 export default function HomeScreen() {
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [region, setRegion] = useState<any>(null);
 
   useEffect(() => {
+    let subscriber: Location.LocationSubscription;
+
     (async () => {
       // Request permission
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -16,16 +17,30 @@ export default function HomeScreen() {
         return;
       }
 
-      // Get current position
-      let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc);
-      setRegion({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
+      // Start watching location
+      subscriber = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 2000, // update every 2s
+          distanceInterval: 5, // or every 5 meters
+        },
+        (loc) => {
+          setRegion({
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          });
+        }
+      );
     })();
+
+    // Clean up when unmounting
+    return () => {
+      if (subscriber) {
+        subscriber.remove();
+      }
+    };
   }, []);
 
   if (!region) {
@@ -43,7 +58,7 @@ export default function HomeScreen() {
       showsUserLocation={true}
       followsUserLocation={true}
     >
-      {/* Example marker (you can add art pieces later here) */}
+      {/* Example marker */}
       <Marker
         coordinate={{
           latitude: region.latitude,
