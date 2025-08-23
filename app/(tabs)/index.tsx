@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View, ActivityIndicator } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import { StyleSheet, View, ActivityIndicator, Text } from "react-native";
+import MapView, { PROVIDER_GOOGLE, Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
+import { markers } from "../../assets/poi";
+import { customMapStyle } from "../../assets/customMapStyle";
 
 export default function HomeScreen() {
   const [region, setRegion] = useState<any>(null);
@@ -11,7 +13,7 @@ export default function HomeScreen() {
 
     (async () => {
       // Request permission
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         console.log("Permission to access location was denied");
         return;
@@ -44,30 +46,51 @@ export default function HomeScreen() {
   }, []);
 
   if (!region) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="blue" />
-      </View>
-    );
-  }
-
   return (
-    <MapView
-      style={styles.map}
-      region={region}
-      showsUserLocation={true}
-      followsUserLocation={true}
-    >
-      {/* Example marker */}
-      <Marker
-        coordinate={{
-          latitude: region.latitude,
-          longitude: region.longitude,
-        }}
-        title="You are here"
-      />
-    </MapView>
+    <View style={styles.center}>
+      <ActivityIndicator size="large" color="blue" />
+    </View>
   );
+}
+
+return (
+  <MapView
+    style={styles.map}
+    region={region}
+    showsUserLocation={true}
+    followsUserLocation={true}
+    customMapStyle={customMapStyle}
+    provider={PROVIDER_GOOGLE}
+  >
+
+    {/* Render custom POI markers */}
+    {markers.map((marker) => (
+      <Marker
+        key={marker.id}
+        coordinate={{
+          latitude: marker.latitude,
+          longitude: marker.longitude,
+        }}
+      >
+        {/* Small dot instead of default pin */}
+        <View
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: "red",
+          }}
+        />
+        {/* Show title only when zoomed in enough */}
+        {region?.latitudeDelta < 0.02 && (
+          <Callout>
+            <Text>{marker.title}</Text>
+          </Callout>
+        )}
+      </Marker>
+    ))}
+  </MapView>
+);
 }
 
 const styles = StyleSheet.create({
