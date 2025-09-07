@@ -1,50 +1,201 @@
-# Welcome to your Expo app 👋
+# AI Tour Guide
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A full-stack location-based mobile application built with modern technologies, featuring a React Native frontend and FastAPI backend with PostgreSQL database, all containerized with Docker.
 
-## Get started
+## 🛠️ Technology Stack
 
-1. Install dependencies
+### Frontend
 
-   ```bash
-   npm install
-   ```
+- **React Native** with **Expo** - Cross-platform mobile development
+- **TypeScript** - Type-safe JavaScript for better code quality
+- **Expo Router** - File-based navigation system
 
-2. Start the app
+### Backend
 
-   ```bash
-   npx expo start
-   ```
+- **FastAPI** - High-performance Python web framework with automatic API documentation
+- **PostgreSQL 15** - Production-grade relational database
+- **SQLAlchemy** - Python SQL toolkit and ORM
+- **Alembic** - Database migration tool for version control of schema changes
+- **Pydantic** - Data validation using Python type annotations
 
-In the output, you'll find options to open the app in a
+### DevOps & Infrastructure
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Docker** & **Docker Compose** - Containerization and orchestration
+- **uvicorn** - ASGI server for FastAPI
+- **psycopg2** - PostgreSQL adapter for Python
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🏗️ Architecture
 
-## Get a fresh project
+This project follows a **monorepo structure** with clear separation of concerns:
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+ai-tourguide/
+├── frontend/              # React Native/Expo mobile app
+│   ├── app/              # Expo Router pages
+│   ├── components/       # Reusable UI components
+│   └── assets/           # Images, fonts, etc.
+├── backend/              # FastAPI server
+│   ├── app/
+│   │   ├── api/routers/  # API endpoint definitions
+│   │   ├── models/       # SQLAlchemy database models
+│   │   ├── schemas/      # Pydantic data validation schemas
+│   │   └── core/         # Database and configuration
+│   └── alembic/          # Database migrations
+├── docker-compose.yml    # Multi-service orchestration
+└── README.md
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🚀 Features
 
-## Learn more
+- **RESTful API** with automatic OpenAPI documentation
+- **Database migrations** with version control
+- **Type-safe data validation** on both frontend and backend
+- **Containerized development environment** for consistent setup
+- **Production-ready architecture** with proper separation of concerns
 
-To learn more about developing your project with Expo, look at the following resources:
+## 📊 Database Schema
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The application uses a PostgreSQL database with the following structure:
 
-## Join the community
+**Locations Table:**
 
-Join our community of developers creating universal apps.
+- `id` (Primary Key)
+- `title` (String, indexed)
+- `category` (Single character code, indexed)
+- `latitude` (Float, indexed)
+- `longitude` (Float, indexed)
+- `created_at` (Timestamp with timezone)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+**Optimizations:**
+
+- Composite index on `(category, title)` for efficient filtering
+- Individual indexes on frequently queried fields
+
+## 🐳 Docker Configuration
+
+The application runs in a multi-container environment:
+
+- **Database Container**: PostgreSQL 15 with persistent volume storage
+- **API Container**: FastAPI with hot-reload for development
+- **Health checks** ensure proper startup sequence
+
+Key Docker features implemented:
+
+- **Volume persistence** for database data
+- **Service dependency management**
+- **Environment variable configuration**
+- **Port mapping** for local development
+
+## 🔧 Development Setup
+
+### Prerequisites
+
+- Docker & Docker Compose
+- Git
+
+### Quick Start
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone <repository-url>
+   cd ai-tourguide
+   ```
+
+2. **Start the development environment:**
+
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Access the services:**
+   - **API Documentation**: http://localhost:8000/docs
+   - **API Endpoints**: http://localhost:8000
+   - **Database**: localhost:5432
+
+### Database Operations
+
+```bash
+# Run database migrations
+docker exec -it ai-tourguide-api-1 alembic upgrade head
+
+# Create new migration
+docker exec -it ai-tourguide-api-1 alembic revision --autogenerate -m "description"
+
+# Connect to database
+docker exec -it ai-tourguide-db-1 psql -U app -d app
+```
+
+## 📱 API Endpoints
+
+### Locations
+
+- `GET /locations` - Retrieve all locations
+- `POST /locations` - Create new location
+- `GET /locations/{id}` - Get specific location
+- `PUT /locations/{id}` - Update location
+- `DELETE /locations/{id}` - Delete location
+
+**Example Request:**
+
+```json
+{
+  "title": "Vilnius Cathedral",
+  "category": "R",
+  "latitude": 54.6857,
+  "longitude": 25.2879
+}
+```
+
+## 🔍 Technical Highlights
+
+### Backend Architecture
+
+- **Dependency Injection** pattern for database sessions
+- **Schema validation** with Pydantic models
+- **Database relationship mapping** with SQLAlchemy
+- **Automatic API documentation** generation
+- **CORS configuration** for cross-origin requests
+
+### Database Design
+
+- **Migration-based schema management** for production deployments
+- **Optimized indexing strategy** for location-based queries
+- **Timezone-aware timestamps** for data consistency
+
+### Containerization
+
+- **Multi-stage builds** for optimized production images
+- **Environment-specific configurations**
+- **Service orchestration** with proper startup dependencies
+- **Volume management** for data persistence
+
+## 🚀 Production Considerations
+
+This application is designed with production deployment in mind:
+
+- **Environment variable configuration** for sensitive data
+- **Database connection pooling** through SQLAlchemy
+- **Structured logging** for monitoring and debugging
+- **Health check endpoints** for load balancer integration
+- **Docker optimization** for efficient resource usage
+
+## 📝 Development Practices
+
+- **Type safety** throughout the application stack
+- **Database schema versioning** with migration files
+- **API contract definition** with OpenAPI/Swagger
+- **Containerized development** for environment consistency
+- **Separation of concerns** with clean architecture patterns
+
+## 🔧 Technologies Demonstrated
+
+This project showcases proficiency in:
+
+- **Full-stack development** with modern Python and TypeScript
+- **Container orchestration** with Docker Compose
+- **Database design and migration management**
+- **RESTful API development** with automatic documentation
+- **Mobile app development** with React Native/Expo
+- **Production-ready architecture patterns**
+- **Development workflow optimization**
