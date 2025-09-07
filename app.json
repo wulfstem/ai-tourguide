@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "app-idea",
-    "slug": "app-idea",
+  "name": "ai-tourguide",
+  "slug": "ai-tourguide",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
