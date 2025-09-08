@@ -5,7 +5,3 @@ export const categoryColors: Record<string, string> = {
   food: "#81C784",    // green
   special: "#FFD54F",      // yellow
 };
-
-export const markers = [
-  { id: 1, category: "tourism", title: "Ancient Agora", latitude: 40.637853551334246, longitude: 22.94592345631682 },
-];
