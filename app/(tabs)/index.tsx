@@ -8,6 +8,7 @@ import { apiService, Location as LocationType } from "../../services/api";
 
 export default function HomeScreen() {
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [currentRegion, setCurrentRegion] = useState<{latitude: number, longitude: number, latitudeDelta: number, longitudeDelta: number} | null>(null);
   const [markers, setMarkers] = useState<LocationType[]>([]);
   const [isLoadingMarkers, setIsLoadingMarkers] = useState(true);
   const mapRef = useRef<MapView>(null);
@@ -102,32 +103,39 @@ export default function HomeScreen() {
         followsUserLocation={false}
         customMapStyle={customMapStyle}
         provider={PROVIDER_GOOGLE}
+        onRegionChangeComplete={(region) => setCurrentRegion(region)}
       >
         {/* Render markers from backend */}
-        {markers.map((marker) => (
-          <Marker
-            key={marker.id}
-            coordinate={{
-              latitude: marker.latitude,
-              longitude: marker.longitude,
-            }}
-          >
-            {/* Custom marker view */}
-            <View
-              style={[
-                styles.markerDot,
-                { backgroundColor: categoryColors[marker.category] }
-              ]}
-            />
-            {/* Always show callout when marker is pressed */}
-            <Callout>
-              <View style={styles.calloutContainer}>
-                <Text style={styles.calloutTitle}>{marker.title}</Text>
-                <Text style={[styles.calloutCategoryTitle, {color : categoryColors[marker.category]}]}>{categoryTitles[marker.category]}</Text>
-              </View>
-            </Callout>
-          </Marker>
-        ))}
+        {currentRegion &&
+  markers.map((marker) => {
+    // Only show markers if zoomed in enough
+    if (currentRegion.latitudeDelta > 0.3) return null;
+
+    return (
+      <Marker
+        key={marker.id}
+        coordinate={{
+          latitude: marker.latitude,
+          longitude: marker.longitude,
+        }}
+      >
+        <View
+          style={[
+            styles.markerDot,
+            { backgroundColor: categoryColors[marker.category] }
+          ]}
+        />
+        <Callout>
+          <View style={styles.calloutContainer}>
+            <Text style={styles.calloutTitle}>{marker.title}</Text>
+            <Text style={[styles.calloutCategoryTitle, {color : categoryColors[marker.category]}]}>
+              {categoryTitles[marker.category]}
+            </Text>
+          </View>
+        </Callout>
+      </Marker>
+    );
+  })}
       </MapView>
       {/* My Location Button */}
       <TouchableOpacity
