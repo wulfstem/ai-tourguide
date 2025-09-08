@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import { StyleSheet, View, ActivityIndicator, Text, Alert, TouchableOpacity } from "react-native";
-import MapView, { PROVIDER_GOOGLE, Marker, Callout, Region } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE, Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
-import { categoryColors } from "../../assets/categoryClrs";
+import { categoryColors, categoryTitles } from "../../assets/categoryClrs";
 import { customMapStyle } from "../../assets/customMapStyle";
 import { apiService, Location as LocationType } from "../../services/api";
 
 export default function HomeScreen() {
-  // Remove region state, use only userLocation
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [markers, setMarkers] = useState<LocationType[]>([]);
   const [isLoadingMarkers, setIsLoadingMarkers] = useState(true);
@@ -117,14 +116,14 @@ export default function HomeScreen() {
             <View
               style={[
                 styles.markerDot,
-                { backgroundColor: categoryColors[marker.category] || 'red' }
+                { backgroundColor: categoryColors[marker.category] }
               ]}
             />
             {/* Always show callout when marker is pressed */}
             <Callout>
               <View style={styles.calloutContainer}>
                 <Text style={styles.calloutTitle}>{marker.title}</Text>
-                <Text style={styles.calloutCategory}>Category: {marker.category}</Text>
+                <Text style={[styles.calloutCategoryTitle, {color : categoryColors[marker.category]}]}>{categoryTitles[marker.category]}</Text>
               </View>
             </Callout>
           </Marker>
@@ -196,7 +195,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  calloutCategory: {
+  calloutCategoryTitle: {
     fontSize: 12,
     color: '#666',
   },
