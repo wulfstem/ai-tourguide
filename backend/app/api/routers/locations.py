@@ -14,6 +14,7 @@ router = APIRouter(prefix="/locations", tags=["locations"])
 def list_locations(
     db: Session = Depends(get_db),
     category: Optional[str] = None,
+    city_id: Optional[str] = None,  # <-- new filter
     q: Optional[str] = Query(default=None, description="search in title"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -21,6 +22,8 @@ def list_locations(
     stmt = select(Location)
     if category:
         stmt = stmt.where(Location.category == category)
+    if city_id:
+        stmt = stmt.where(Location.city_id == city_id)  # <-- filter by city
     if q:
         ilike = f"%{q}%"
         stmt = stmt.where(Location.title.ilike(ilike))

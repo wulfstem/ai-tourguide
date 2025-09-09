@@ -29,6 +29,7 @@ class LocationUpdate(BaseModel):
 
 class LocationOut(LocationBase):
     id: int
+    city_id: str
     created_at: datetime  # Added the missing field from your model
 
     class Config:

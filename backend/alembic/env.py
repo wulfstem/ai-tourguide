@@ -11,6 +11,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
 from app.core.db import Base  # noqa
 
+# Import your models so Alembic can detect them
+from app.models.location import Location  # noqa
+from app.models.city import City  # noqa
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
