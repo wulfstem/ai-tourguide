@@ -6,7 +6,7 @@ from sqlalchemy import select, func
 
 from app.core.db import get_db
 from app.models.location import Location
-from app.schemas.location import LocationCreate, LocationOut
+from app.schemas.location import LocationCreate, LocationOut, LocationUpdate
 
 router = APIRouter(prefix="/locations", tags=["locations"])
 
@@ -50,3 +50,23 @@ def create_location(payload: LocationCreate, db: Session = Depends(get_db)):
 def count_locations(db: Session = Depends(get_db)):
     total = db.execute(select(func.count()).select_from(Location)).scalar_one()
     return {"count": total}
+
+@router.put("/{location_id}", response_model=LocationOut)
+def update_location(location_id: int, payload: LocationUpdate, db: Session = Depends(get_db)):
+    obj = db.get(Location, location_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Location not found")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(obj, key, value)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+@router.delete("/{location_id}", status_code=204)
+def delete_location(location_id: int, db: Session = Depends(get_db)):
+    obj = db.get(Location, location_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Location not found")
+    db.delete(obj)
+    db.commit()
+    return None
