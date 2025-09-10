@@ -15,6 +15,15 @@ export interface Location {
   created_at: string;
 }
 
+export interface City {
+  id: string;
+  title: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  population: number;
+}
+
 export interface LocationCreate {
   category: string;
   title: string;
@@ -55,6 +64,21 @@ class ApiService {
       return await response.json();
     } catch (error) {
       console.error('Failed to create location:', error);
+      throw error;
+    }
+  }
+
+  async getCities(): Promise<City[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/cities`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to fetch cities:', error);
       throw error;
     }
   }

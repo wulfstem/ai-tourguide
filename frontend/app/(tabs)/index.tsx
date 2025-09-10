@@ -4,32 +4,37 @@ import MapView, { PROVIDER_GOOGLE, Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
 import { categoryColors, categoryTitles } from "../../assets/categoryClrs";
 import { customMapStyle } from "../../assets/customMapStyle";
-import { apiService, Location as LocationType } from "../../services/api";
+import { apiService, Location as LocationType, City as CityType } from "../../services/api";
 
 export default function HomeScreen() {
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [currentRegion, setCurrentRegion] = useState<{latitude: number, longitude: number, latitudeDelta: number, longitudeDelta: number} | null>(null);
   const [markers, setMarkers] = useState<LocationType[]>([]);
-  const [isLoadingMarkers, setIsLoadingMarkers] = useState(true);
+  const [cities, setCities] = useState<CityType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const mapRef = useRef<MapView>(null);
 
-  // Fetch locations from backend
+  // Fetch all data
   useEffect(() => {
-    const fetchLocations = async () => {
+    const fetchData = async () => {
       try {
-        setIsLoadingMarkers(true);
-        const locations = await apiService.getLocations();
+        setIsLoading(true);
+        const [locations, cities] = await Promise.all([
+          apiService.getLocations(),
+          apiService.getCities()
+        ]);
         setMarkers(locations);
-        console.log(`Loaded ${locations.length} locations from backend`);
+        setCities(cities);
+        console.log(`Loaded ${locations.length} locations and ${cities.length} cities`);
       } catch (error) {
-        console.error('Error fetching locations:', error);
-        Alert.alert('Error', 'Failed to load locations from server');
+        console.error('Error fetching data:', error);
+        Alert.alert('Error', 'Failed to load data from server');
       } finally {
-        setIsLoadingMarkers(false);
+        setIsLoading(false);
       }
     };
 
-    fetchLocations();
+    fetchData();
   }, []);
 
   // Get user location
@@ -66,7 +71,6 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // Function to go back to user location
   const goToUserLocation = () => {
     if (userLocation && mapRef.current) {
       mapRef.current.animateToRegion({
@@ -78,8 +82,7 @@ export default function HomeScreen() {
     }
   } 
 
-  // Show loading while markers or userLocation are loading
-  if (isLoadingMarkers || !userLocation) {
+  if (isLoading || !userLocation) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="blue" />
@@ -87,6 +90,8 @@ export default function HomeScreen() {
       </View>
     );
   }
+
+  const isZoomedIn = currentRegion?.latitudeDelta ? currentRegion.latitudeDelta <= 0.3 : false;
 
   return (
     <View style={styles.container}>
@@ -105,43 +110,55 @@ export default function HomeScreen() {
         provider={PROVIDER_GOOGLE}
         onRegionChangeComplete={(region) => setCurrentRegion(region)}
       >
-        {/* Render markers from backend */}
-        {currentRegion &&
-  markers.map((marker) => {
-    // Only show markers if zoomed in enough
-    if (currentRegion.latitudeDelta > 0.3) return null;
-
-    return (
-      <Marker
-        key={marker.id}
-        coordinate={{
-          latitude: marker.latitude,
-          longitude: marker.longitude,
-        }}
-      >
-        <View
-          style={[
-            styles.markerDot,
-            { backgroundColor: categoryColors[marker.category] }
-          ]}
-        />
-        <Callout>
-          <View style={styles.calloutContainer}>
-            <Text style={styles.calloutTitle}>{marker.title}</Text>
-            <Text style={[styles.calloutCategoryTitle, {color : categoryColors[marker.category]}]}>
-              {categoryTitles[marker.category]}
+        {/* City names - always visible */}
+        {cities.map((city) => (
+          <Marker
+            key={`city-${city.id}`}
+            coordinate={{
+              latitude: city.latitude,
+              longitude: city.longitude,
+            }}
+          >
+            <Text style={[styles.cityText, { opacity: isZoomedIn ? 0.2 : 1.0 }]}>
+              {city.title}
             </Text>
-          </View>
-        </Callout>
-      </Marker>
-    );
-  })}
+            <Callout>
+              <View style={styles.calloutContainer}>
+                <Text style={styles.calloutTitle}>{city.title}</Text>
+                <Text style={styles.calloutSubtitle}>{city.country}</Text>
+              </View>
+            </Callout>
+          </Marker>
+        ))}
+
+        {/* Location markers - only when zoomed in */}
+        {isZoomedIn && markers.map((marker) => (
+          <Marker
+            key={`location-${marker.id}`}
+            coordinate={{
+              latitude: marker.latitude,
+              longitude: marker.longitude,
+            }}
+          >
+            <View
+              style={[
+                styles.markerDot,
+                { backgroundColor: categoryColors[marker.category] }
+              ]}
+            />
+            <Callout>
+              <View style={styles.calloutContainer}>
+                <Text style={styles.calloutTitle}>{marker.title}</Text>
+                <Text style={[styles.calloutCategoryTitle, {color : categoryColors[marker.category]}]}>
+                  {categoryTitles[marker.category]}
+                </Text>
+              </View>
+            </Callout>
+          </Marker>
+        ))}
       </MapView>
-      {/* My Location Button */}
-      <TouchableOpacity
-        style={styles.myLocationButton}
-        onPress={goToUserLocation}
-      >
+      
+      <TouchableOpacity style={styles.myLocationButton} onPress={goToUserLocation}>
         <Text style={styles.buttonText}>📍</Text>
       </TouchableOpacity>
     </View>
@@ -171,6 +188,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 2,
     borderColor: 'white',
+  },
+  cityText: {
+    color: 'black',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   myLocationButton: {
     position: 'absolute',
@@ -202,6 +225,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
+  },
+  calloutSubtitle: {
+    fontSize: 12,
+    color: '#666',
   },
   calloutCategoryTitle: {
     fontSize: 12,
