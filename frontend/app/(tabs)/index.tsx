@@ -1,86 +1,15 @@
-import React, { useEffect, useState, useRef } from "react";
-import { StyleSheet, View, ActivityIndicator, Text, Alert, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, View, ActivityIndicator, Text, TouchableOpacity } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Marker, Callout } from "react-native-maps";
-import * as Location from "expo-location";
 import { categoryColors, categoryTitles } from "../../assets/categoryClrs";
 import { customMapStyle } from "../../assets/customMapStyle";
-import { apiService, Location as LocationType, City as CityType } from "../../services/api";
+import { useUserLocation } from "../../hooks/useUserLocation";
+import { useMapData } from "../../hooks/useMapData";
 
 export default function HomeScreen() {
-  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [currentRegion, setCurrentRegion] = useState<{latitude: number, longitude: number, latitudeDelta: number, longitudeDelta: number} | null>(null);
-  const [markers, setMarkers] = useState<LocationType[]>([]);
-  const [cities, setCities] = useState<CityType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const mapRef = useRef<MapView>(null);
-
-  // Fetch all data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const [locations, cities] = await Promise.all([
-          apiService.getLocations(),
-          apiService.getCities()
-        ]);
-        setMarkers(locations);
-        setCities(cities);
-        console.log(`Loaded ${locations.length} locations and ${cities.length} cities`);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        Alert.alert('Error', 'Failed to load data from server');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // Get user location
-  useEffect(() => {
-    let subscriber: Location.LocationSubscription;
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert('Permission Denied', 'Location permission is required to use this feature.');
-        return;
-      }
-      const currentLocation = await Location.getCurrentPositionAsync({});
-      setUserLocation({
-        latitude: currentLocation.coords.latitude,
-        longitude: currentLocation.coords.longitude,
-      });
-      // Watch location
-      subscriber = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 2000,
-          distanceInterval: 5,
-        },
-        (loc) => {
-          setUserLocation({
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude,
-          });
-        }
-      );
-    })();
-    return () => {
-      if (subscriber) subscriber.remove();
-    };
-  }, []);
-
-  const goToUserLocation = () => {
-    if (userLocation && mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      }, 1000);
-    }
-  } 
+  const { userLocation, goToUserLocation, mapRef } = useUserLocation();
+  const { markers, cities, isLoading } = useMapData();
 
   if (isLoading || !userLocation) {
     return (
