@@ -72,10 +72,16 @@ export default function HomeScreen() {
           >
             <View
               style={[
+                styles.markerWrapper,
+              ]}
+            >
+              <View
+              style={[
                 styles.markerDot,
                 { backgroundColor: categoryColors[marker.category] }
               ]}
             />
+            </View>
             <Callout>
               <View style={styles.calloutContainer}>
                 <Text style={styles.calloutTitle}>{marker.title}</Text>
@@ -112,6 +118,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  markerWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+  },
   markerDot: {
     width: 12,
     height: 12,
@@ -124,6 +135,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
   },
   myLocationButton: {
     position: 'absolute',
