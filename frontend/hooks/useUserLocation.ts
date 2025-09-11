@@ -1,3 +1,4 @@
+// hooks/useUserLocation.ts
 import { useState, useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 import * as Location from 'expo-location';
@@ -59,9 +60,22 @@ export const useUserLocation = () => {
     }
   };
 
+  // Function to animate to any location (city or user)
+  const navigateToLocation = (latitude: number, longitude: number, zoomLevel: number = 0.05) => {
+    if (mapRef.current) {
+      mapRef.current.animateToRegion({
+        latitude,
+        longitude,
+        latitudeDelta: zoomLevel,
+        longitudeDelta: zoomLevel,
+      }, 1000);
+    }
+  };
+
   return {
     userLocation,
     goToUserLocation,
+    navigateToLocation,
     mapRef, // Also return mapRef since goToUserLocation needs it
   };
 };

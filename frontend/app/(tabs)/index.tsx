@@ -8,7 +8,7 @@ import { useMapData } from "../../hooks/useMapData";
 
 export default function HomeScreen() {
   const [currentRegion, setCurrentRegion] = useState<{latitude: number, longitude: number, latitudeDelta: number, longitudeDelta: number} | null>(null);
-  const { userLocation, goToUserLocation, mapRef } = useUserLocation();
+  const { userLocation, goToUserLocation, navigateToLocation, mapRef } = useUserLocation();
   const { markers, cities, isLoading } = useMapData();
 
   if (isLoading || !userLocation) {
@@ -47,6 +47,7 @@ export default function HomeScreen() {
               latitude: city.latitude,
               longitude: city.longitude,
             }}
+            onPress={() => navigateToLocation(city.latitude, city.longitude, 0.1)}
           >
             <Text style={[styles.cityText, { opacity: isZoomedIn ? 0.2 : 1.0 }]}>
               {city.title}
