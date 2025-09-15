@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { StyleSheet, View, ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  ActivityIndicator,
+  Text,
+  TouchableOpacity,
+  Modal,
+} from "react-native";
 import MapView, { PROVIDER_GOOGLE, Marker, Callout } from "react-native-maps";
 import { categoryColors, categoryTitles } from "../../assets/categoryClrs";
 import { customMapStyle } from "../../assets/customMapStyle";
@@ -7,9 +14,16 @@ import { useUserLocation } from "../../hooks/useUserLocation";
 import { useMapData } from "../../hooks/useMapData";
 
 export default function HomeScreen() {
-  const [currentRegion, setCurrentRegion] = useState<{latitude: number, longitude: number, latitudeDelta: number, longitudeDelta: number} | null>(null);
-  const { userLocation, goToUserLocation, navigateToLocation, mapRef } = useUserLocation();
+  const [currentRegion, setCurrentRegion] = useState<{
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  } | null>(null);
+  const { userLocation, goToUserLocation, navigateToLocation, mapRef } =
+    useUserLocation();
   const { markers, cities, isLoading } = useMapData();
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   if (isLoading || !userLocation) {
     return (
@@ -20,7 +34,13 @@ export default function HomeScreen() {
     );
   }
 
-  const isZoomedIn = currentRegion?.latitudeDelta ? currentRegion.latitudeDelta <= 0.3 : false;
+  const navigateToDetail = (marker: any) => {
+    setShowDetailModal(true);
+  };
+
+  const isZoomedIn = currentRegion?.latitudeDelta
+    ? currentRegion.latitudeDelta <= 0.3
+    : false;
 
   return (
     <View style={styles.container}>
@@ -47,56 +67,80 @@ export default function HomeScreen() {
               latitude: city.latitude,
               longitude: city.longitude,
             }}
-            onPress={() => navigateToLocation(city.latitude, city.longitude, 0.1)}
+            onPress={() =>
+              navigateToLocation(city.latitude, city.longitude, 0.1)
+            }
           >
-            <Text style={[styles.cityText, { opacity: isZoomedIn ? 0.2 : 1.0 }]}>
+            <Text
+              style={[styles.cityText, { opacity: isZoomedIn ? 0.2 : 1.0 }]}
+            >
               {city.title}
             </Text>
-            <Callout>
-              <View style={styles.calloutContainer}>
-                <Text style={styles.calloutTitle}>{city.title}</Text>
-                <Text style={styles.calloutSubtitle}>{city.country}</Text>
-              </View>
-            </Callout>
           </Marker>
         ))}
 
         {/* Location markers - only when zoomed in */}
-        {isZoomedIn && markers.map((marker) => (
-          <Marker
-            key={`location-${marker.id}`}
-            coordinate={{
-              latitude: marker.latitude,
-              longitude: marker.longitude,
-            }}
-          >
-            <View
-              style={[
-                styles.markerWrapper,
-              ]}
+        {isZoomedIn &&
+          markers.map((marker) => (
+            <Marker
+              key={`location-${marker.id}`}
+              coordinate={{
+                latitude: marker.latitude,
+                longitude: marker.longitude,
+              }}
             >
-              <View
-              style={[
-                styles.markerDot,
-                { backgroundColor: categoryColors[marker.category] }
-              ]}
-            />
-            </View>
-            <Callout>
-              <View style={styles.calloutContainer}>
-                <Text style={styles.calloutTitle}>{marker.title}</Text>
-                <Text style={[styles.calloutCategoryTitle, {color : categoryColors[marker.category]}]}>
-                  {categoryTitles[marker.category]}
-                </Text>
+              <View style={[styles.markerWrapper]}>
+                <View
+                  style={[
+                    styles.markerDot,
+                    { backgroundColor: categoryColors[marker.category] },
+                  ]}
+                />
               </View>
-            </Callout>
-          </Marker>
-        ))}
+              <Callout onPress={() => navigateToDetail(marker)}>
+                <View style={styles.calloutContainer}>
+                  <Text style={styles.calloutTitle}>{marker.title}</Text>
+                  <Text
+                    style={[
+                      styles.calloutCategoryTitle,
+                      { color: categoryColors[marker.category] },
+                    ]}
+                  >
+                    {categoryTitles[marker.category]}
+                  </Text>
+                  <Text style={styles.detailButtonText}>AI Guide →</Text>
+                </View>
+              </Callout>
+            </Marker>
+          ))}
       </MapView>
-      
-      <TouchableOpacity style={styles.myLocationButton} onPress={goToUserLocation}>
+      <TouchableOpacity
+        style={styles.myLocationButton}
+        onPress={goToUserLocation}
+      >
         <Text style={styles.buttonText}>📍</Text>
       </TouchableOpacity>
+      <Modal
+        visible={showDetailModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>AI Guide</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowDetailModal(false)}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.emptyContent}>
+            <Text style={styles.emptyText}>Details coming soon...</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -116,11 +160,11 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   markerWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 10,
   },
   markerDot: {
@@ -128,27 +172,27 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: 'white',
+    borderColor: "white",
   },
   cityText: {
-    color: 'black',
+    color: "black",
     fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     paddingVertical: 8,
     paddingHorizontal: 8,
   },
   myLocationButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 100,
     right: 20,
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -166,15 +210,69 @@ const styles = StyleSheet.create({
   },
   calloutTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   calloutSubtitle: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
   calloutCategoryTitle: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
+  },
+  detailButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 15,
+    marginTop: 8,
+    alignSelf: "flex-end",
+  },
+  detailButtonText: {
+  color: "#007AFF",
+  fontSize: 12,
+  fontWeight: "600",
+  textAlign: "right",
+  marginTop: 8,
+  textDecorationLine: "underline",
+},
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingTop: 30,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeButtonText: {
+    fontSize: 18,
+    color: "#666",
+  },
+  emptyContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#999",
   },
 });
