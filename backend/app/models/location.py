@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Float, DateTime, Index, func
-
+from sqlalchemy.orm import relationship
 from app.core.db import Base
 
 class Location(Base):
@@ -16,3 +16,5 @@ class Location(Base):
     __table_args__ = (
         Index("ix_locations_city_id", "city_id"),
     )
+
+    details = relationship("LocationDetails", back_populates="location", uselist=False)

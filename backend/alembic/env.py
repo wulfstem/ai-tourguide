@@ -13,7 +13,8 @@ from app.core.db import Base  # noqa
 
 # Import your models so Alembic can detect them
 from app.models.location import Location  # noqa
-from app.models.city import City  # noqa
+from app.models.city import City
+from app.models.location_details import LocationDetails  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
